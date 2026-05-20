@@ -46,7 +46,7 @@ voiture-net (réseau Docker interne)
 ### Étape 1 — Cloner le projet
 
 ```bash
-git clone <URL_DU_REPO>
+git clone https://github.com/MeryElBiach/-spring-react-voiture-shop.git
 cd SpringDataRest
 ```
 
