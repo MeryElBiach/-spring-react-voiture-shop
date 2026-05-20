@@ -48,6 +48,17 @@ services:
       - ollama_data:/root/.ollama
     networks:
       - voiture-net
+  react-app:
+    container_name: react-app
+    build:
+      context: .
+      dockerfile: Dockerfile.react
+    ports:
+      - "3000:80"
+    networks:
+      - voiture-net
+    depends_on:
+      - springboot-app
 
 volumes:
   mariadb_data:
