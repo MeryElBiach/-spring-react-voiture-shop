@@ -64,14 +64,6 @@ Cette commande fait tout automatiquement :
 
 > La première exécution prend environ 5 à 10 minutes (téléchargement des images + compilation).
 
-### Étape 3 — Charger le modèle IA (première fois uniquement)
-
-```bash
-docker exec -it ollama ollama pull llama3.2
-```
-
-> Cette étape est nécessaire une seule fois. Le modèle est ensuite persisté dans un volume Docker.
-
 ### Étape 4 — Vérifier que tout tourne
 
 ```bash
