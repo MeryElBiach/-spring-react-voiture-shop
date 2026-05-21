@@ -133,4 +133,4 @@ docker-compose down -v
 - *"Comparez le Toyota Corolla et le Honda CRV"*
 - *"Y a-t-il des anomalies de prix dans le catalogue ?"*
 - *"Recommandez une voiture pour un budget de 100 000€"*
-- *"Faites une description marketing du Honda CRV"*
+- *"Faites une descriptiondocker network inspect springdatarest_voiture-net marketing du Honda CRV"*
