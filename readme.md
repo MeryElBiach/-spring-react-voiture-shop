@@ -18,7 +18,7 @@ Application complète de gestion d'un magasin de voitures avec assistant IA int�
 | IA | Ollama + llama3.2 (Spring AI) |
 | Sécurité | Spring Security + JWT |
 | API Docs | Swagger UI (Springdoc) |
-| Déploiement | Docker + Docker Compose |
+| Déploiement | Docker + Docker Compose + Kubernetes (Minikube) |
 
 ---
 
@@ -33,7 +33,7 @@ Application complète de gestion d'un magasin de voitures avec assistant IA int�
 
 ---
 
-## Architecture Docker
+## Architecture Docker Compose
 
 ```
 voiture-net (réseau Docker interne)
@@ -45,7 +45,7 @@ voiture-net (réseau Docker interne)
 
 ---
 
-##  Guide de démarrage
+## Guide de démarrage — Docker Compose
 
 ### Prérequis
 
@@ -104,17 +104,16 @@ react-app        Up
 
 | Interface | URL |
 |---|---|
-|  Application React | http://localhost:3000 |
-|  API Spring Data REST | http://localhost:9090/api |
-|  Swagger UI | http://localhost:9090/swagger-ui/index.html |
+| Application React | http://localhost:3000 |
+| API Spring Data REST | http://localhost:9090/api |
+| Swagger UI | http://localhost:9090/swagger-ui/index.html |
 
 ### Identifiants de connexion
 
 ```
-Login    : admin
+Login        : admin
 Mot de passe : admin
 ```
-
 
 ---
 
@@ -129,7 +128,7 @@ Mot de passe : admin
 
 ---
 
-## Commandes utiles
+## Commandes utiles — Docker Compose
 
 ```bash
 # Arrêter les containers sans les supprimer (usage quotidien)
@@ -147,10 +146,128 @@ docker-compose logs -f springboot-app
 # Reconstruire après modification du code
 docker-compose up -d --build
 
-# ⚠️ Tout supprimer (containers + volumes + données)
+# Tout supprimer (containers + volumes + données)
 docker-compose down -v
 ```
+![img.png](img.png)
+![img_4.png](img_4.png)
+---
 
+## Déploiement Kubernetes (Minikube)
+
+Cette section décrit le déploiement de l'application sur un cluster Kubernetes local avec Minikube.
+
+### Architecture Kubernetes
+
+```
+Minikube Node
+├── Pod mariadb (x1 replica)
+│   ├── Container : mariadb:10.11
+│   ├── Service   : ClusterIP :3306 (DNS interne : mariadb)
+│   └── PVC       : mariadb-pv-claim (1Gi)
+│
+├── Pod springboot-deployment (x3 replicas)
+│   ├── Container : springdatarest-springboot-app:latest
+│   └── Service   : NodePort :8080
+│
+├── ConfigMap : db-config (host, dbName)
+└── Secret    : mariadb-secrets (username, password)
+```
+
+### Fichiers YAML
+
+| Fichier | Rôle |
+|---|---|
+| `k8s/db-deployment.yaml` | PVC + Deployment + Service MariaDB |
+| `k8s/app-deployment.yaml` | Deployment + Service Spring Boot (3 replicas) |
+| `k8s/configmap.yaml` | Variables de configuration (host, dbName) |
+| `k8s/secret.yaml` | Credentials encodés en base64 |
+
+### Prérequis
+
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/) installé
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) installé
+- Docker Desktop démarré
+
+### Démarrage du cluster
+
+```powershell
+# Démarrer Minikube
+minikube start --driver=docker
+
+# Vérifier le statut
+minikube status
+
+# Pointer Docker vers Minikube 
+minikube docker-env | Invoke-Expression
+```
+
+### Build des images dans Minikube
+
+```powershell
+# Spring Boot
+docker build -t springdatarest-springboot-app:latest .
+
+# React
+docker build -t springdatarest-react-app:latest -f Dockerfile.react .
+```
+
+### Déploiement
+
+```powershell
+# 1. ConfigMap et Secret
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secret.yaml
+
+# 2. Base de données
+kubectl apply -f k8s/db-deployment.yaml
+
+# 3. Backend Spring Boot
+kubectl apply -f k8s/app-deployment.yaml
+```
+
+### Vérification
+
+```powershell
+# État des pods
+kubectl get pods
+
+# État des services
+kubectl get svc
+
+# État des volumes
+kubectl get pvc
+
+# Logs Spring Boot
+kubectl logs deployment/springboot-deployment
+
+# Dashboard visuel
+minikube dashboard
+```
+
+### Accès à l'application
+
+```powershell
+# Obtenir l'URL du service Spring Boot
+minikube service springboot-svc --url
+```
+
+L'URL générée (ex: `http://127.0.0.1:57596`) permet de tester les endpoints dans Postman :
+
+```
+GET http://127.0.0.1:57596/voitures
+GET http://127.0.0.1:57596/api/voitures
+```
+![img_1.png](img_1.png)
+![img_2.png](img_2.png)
+![img_3.png](img_3.png)
+### Arrêt du cluster
+
+```powershell
+minikube stop
+```
+
+---
 
 > ENSIAS — École Nationale Supérieure d'Informatique et d'Analyse des Systèmes  
 > Filière Data & Software Sciences (D2S) — 2025/2026
