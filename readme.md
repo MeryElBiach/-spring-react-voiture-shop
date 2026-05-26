@@ -117,6 +117,13 @@ Mot de passe : admin
 
 ---
 
+## Screenshots — Docker Compose
+
+![Application React](img.png)
+![Swagger UI](img_4.png)
+
+---
+
 ## Exemples de questions pour l'assistant IA
 
 - *"Quelle est la voiture la moins chère ?"*
@@ -131,7 +138,7 @@ Mot de passe : admin
 ## Commandes utiles — Docker Compose
 
 ```bash
-# Arrêter les containers sans les supprimer (usage quotidien)
+# Arrêter les containers sans les supprimer
 docker-compose stop
 
 # Redémarrer les containers arrêtés
@@ -149,8 +156,7 @@ docker-compose up -d --build
 # Tout supprimer (containers + volumes + données)
 docker-compose down -v
 ```
-![img.png](img.png)
-![img_4.png](img_4.png)
+
 ---
 
 ## Déploiement Kubernetes (Minikube)
@@ -170,8 +176,12 @@ Minikube Node
 │   ├── Container : springdatarest-springboot-app:latest
 │   └── Service   : NodePort :8080
 │
+├── Pod react-deployment (x1 replica)
+│   ├── Container : springdatarest-react-app:latest
+│   └── Service   : NodePort :80
+│
 ├── ConfigMap : db-config (host, dbName)
-└── Secret    : mariadb-secrets (username, password)
+└── Secret    : mariadb-secrets (username, password encodés base64)
 ```
 
 ### Fichiers YAML
@@ -180,6 +190,7 @@ Minikube Node
 |---|---|
 | `k8s/db-deployment.yaml` | PVC + Deployment + Service MariaDB |
 | `k8s/app-deployment.yaml` | Deployment + Service Spring Boot (3 replicas) |
+| `k8s/react-deployment.yaml` | Deployment + Service React (1 replica) |
 | `k8s/configmap.yaml` | Variables de configuration (host, dbName) |
 | `k8s/secret.yaml` | Credentials encodés en base64 |
 
@@ -198,7 +209,7 @@ minikube start --driver=docker
 # Vérifier le statut
 minikube status
 
-# Pointer Docker vers Minikube 
+# Pointer Docker vers Minikube (obligatoire avant le build)
 minikube docker-env | Invoke-Expression
 ```
 
@@ -212,7 +223,7 @@ docker build -t springdatarest-springboot-app:latest .
 docker build -t springdatarest-react-app:latest -f Dockerfile.react .
 ```
 
-### Déploiement
+### Déploiement dans l'ordre
 
 ```powershell
 # 1. ConfigMap et Secret
@@ -224,12 +235,15 @@ kubectl apply -f k8s/db-deployment.yaml
 
 # 3. Backend Spring Boot
 kubectl apply -f k8s/app-deployment.yaml
+
+# 4. Frontend React
+kubectl apply -f k8s/react-deployment.yaml
 ```
 
 ### Vérification
 
 ```powershell
-# État des pods
+# État des pods (doit afficher 5 pods : 1 mariadb + 3 springboot + 1 react)
 kubectl get pods
 
 # État des services
@@ -238,29 +252,47 @@ kubectl get svc
 # État des volumes
 kubectl get pvc
 
+# ConfigMap et Secrets
+kubectl get configmap
+kubectl get secrets
+
 # Logs Spring Boot
 kubectl logs deployment/springboot-deployment
-
-# Dashboard visuel
-minikube dashboard
 ```
 
 ### Accès à l'application
 
 ```powershell
-# Obtenir l'URL du service Spring Boot
+# URL Spring Boot
 minikube service springboot-svc --url
+
+# URL React
+minikube service react-svc --url
 ```
 
-L'URL générée (ex: `http://127.0.0.1:57596`) permet de tester les endpoints dans Postman :
+Tester les endpoints dans Postman :
 
 ```
-GET http://127.0.0.1:57596/voitures
-GET http://127.0.0.1:57596/api/voitures
+GET http://127.0.0.1:<port>/voitures
+GET http://127.0.0.1:<port>/api/voitures
 ```
+
+### Dashboard Kubernetes
+
+```powershell
+minikube dashboard
+```
+
+---
+
+## Screenshots — Kubernetes Dashboard
+
 ![img_1.png](img_1.png)
 ![img_2.png](img_2.png)
 ![img_3.png](img_3.png)
+
+---
+
 ### Arrêt du cluster
 
 ```powershell
